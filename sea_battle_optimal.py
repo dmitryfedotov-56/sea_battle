@@ -17,7 +17,7 @@ import sea_battle_interface
 from sea_battle_interface import say_greeting
 from sea_battle_interface import game_is_over
 from sea_battle_interface import show_target
-from sea_battle_interface import draw_board
+from sea_battle_interface import draw_boards
 
 
 
@@ -34,7 +34,6 @@ class IntelligentMachine(Machine):                      # IntelligentMachine
 
     def __init__(self, ownboard, oppboard):
         Machine.__init__(self, ownboard, oppboard)
-        self.last = None                                # last shot
         self.hits = []                                  # no hits now
         self.cell_to_try = []                           # no cells to try
 
@@ -47,10 +46,6 @@ class IntelligentMachine(Machine):                      # IntelligentMachine
                 if c in ship.contour: return
         self.cell_to_try.append(c)                      # add to the list
 
-
-    def get_ship(self, c):                              # find the ship I hit
-        for ship in self.oppboard.fleet:
-            if c in ship.body: return ship
   
 #    def show_variants(self):
 #        s = "варианты : "
@@ -67,28 +62,26 @@ class IntelligentMachine(Machine):                      # IntelligentMachine
             target = random.choice(self.not_tried)      # choose a random target
 
         self.not_tried.remove(target)                   # now it is used
-        self.last = target                              # remember the target
         show_target(target)                             # show target
         return target
 
 
     def shot(self):
         result = Gamer.shot(self)                       # gamer's shot
-        draw_board(self.oppboard)                       # show opponent board
 
         if result == result_code["killed"]:             # is it killed?
             self.hits = []                              # no hits
             self.cell_to_try = []                       # no cells to try
-            killed_ship = self.get_ship(self.last)      # this ship was killed
+            killed_ship = self.get_ship(self.target)    # this ship was killed
             for c in killed_ship.contour:               # remove from not_tried
                 if c in self.not_tried:                 # all the cells 
                     self.not_tried.remove(c)            # of killed ship contour
 
         if result == result_code["wounded"]:            # is it wounded?
             if self.hits == []:
-                self.hits.append(self.last)             # only one hit
-                row = self.last[0]
-                col = self.last[1]
+                self.hits.append(self.target)           # only one hit
+                row = self.target[0]
+                col = self.target[1]
                 self.cell_to_try = []                   # add neighboring cells
                 self.add_cell_to_try((row, col - 1))
                 self.add_cell_to_try((row - 1, col))
@@ -99,7 +92,7 @@ class IntelligentMachine(Machine):                      # IntelligentMachine
                 return result  
 
             if len(self.hits) == 1:                     # two hits
-                self.hits.append(self.last)
+                self.hits.append(self.target)
 
                 if self.hits[0][0] == self.hits[1][0]:  # horizontal position
                     self.cell_to_try = []

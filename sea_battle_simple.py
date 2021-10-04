@@ -11,7 +11,7 @@ import sys
 import sea_battle_interface
 from sea_battle_interface import say_greeting
 from sea_battle_interface import game_is_over
-from sea_battle_interface import draw_board
+from sea_battle_interface import draw_boards
 
 from sea_battle_classes import Game
 

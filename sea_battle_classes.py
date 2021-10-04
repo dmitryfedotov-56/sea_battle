@@ -20,8 +20,7 @@ from sea_battle_interface import say_greeting       # greeting
 from sea_battle_interface import say_game_start     # game is started
 from sea_battle_interface import say_good_by        # good by
 from sea_battle_interface import game_is_over       # is the game to be continued?
-from sea_battle_interface import draw_board         # draw board
-from sea_battle_interface import draw_board         # draw board
+from sea_battle_interface import draw_boards        # draw boards
 from sea_battle_interface import get_coordinates    # get_coordinates
 
 from sea_battle_interface import show_target        # show machine code    
@@ -50,6 +49,7 @@ class Cell():                       # cell
 
     def __init__(self):             # constructor
         self.hit = False            # not hit now
+        self.shaded = False         # nor shaded now
         self.occupied = False       # free cell
 
 # -------------------------------------------------------------------
@@ -218,23 +218,32 @@ class Gamer():
 
     def __init__(self, ownboard, oppboard):
 
-        self.ownboard = ownboard                # own board
-        self.oppboard = oppboard                # opponent board
+        self.target = None
+        self.ownboard = ownboard                    # own board
+        self.oppboard = oppboard                    # opponent board
 
-    def get_target(self):   pass                # get target
+
+    def get_target(self):   pass                    # get target
+
+
+    def get_ship(self, c):                          # find the ship I hit
+        for ship in self.oppboard.fleet:
+            if c in ship.body: return ship
 
     def shot(self):
-        target = self.get_target()              # get target
-        result = self.oppboard.shot(target)     # shoot at the opponent's board
-        show_result(self.code, result)          # show result
+        self.target = self.get_target()                 # get target
+        result = self.oppboard.shot(self.target)        # shoot at the opponent's board
+        if result == result_code["killed"]:             # is it killed?
+            killed_ship = self.get_ship(self.target)    # find the killed ship
+            for c in killed_ship.contour:               # outline the contour
+                row = c[0]
+                col = c[1]
+                self.oppboard.field[row][col].shaded = True
+
+        show_result(self.code, result)                  # show result
         return result
 
-    def move(self):                             # gamer's move
-        while True:
-            result = self.shot()                # make a shot
-            if result == result_code["miss"]:   return result
-            if result == result_code["defeat"]: return result
-# -------------------------------------------------------------------
+ # -------------------------------------------------------------------
 #                                 Class Man
 # -------------------------------------------------------------------
 
@@ -245,8 +254,9 @@ class Man(Gamer):                                   # man as a gamer
         self.code = gamer_code["machine"]
 
     def get_target(self):                           # get man's target
-        draw_board(self.oppboard)                   # draw machine's board
         return get_coordinates(self.oppboard)       # get coordinates
+
+ 
 
 # -------------------------------------------------------------------
 #                                 Class Machine
@@ -269,9 +279,14 @@ class Machine(Gamer):                           # machine is a gamer
         show_target(target)                     # show target
         return target
 
-    def shot(self):
+
+    def get_ship(self, c):                      # find the ship I hit
+        for ship in self.oppboard.fleet:
+            if c in ship.body: return ship
+
+
+    def shot(self):                             # machine's shot                   
         result = Gamer.shot(self)
-        if result != result_code["miss"]: draw_board(self.oppboard)
         return result
 
 # -------------------------------------------------------------------
@@ -287,19 +302,28 @@ class Game():                                       # Game
         self.man = Man(self.man_board, self.machine_board)          # man is a gamer
         self.machine = Machine(self.machine_board, self.man_board)  # machine is a gamer
 
-    def start(self):                                    # start the game
-        say_game_start()                                # game is started    
-        draw_board(self.man_board)                      # man's board
 
-        while True : 
-            result = self.man.move()                    # man's shot
-            if result == result_code["defeat"]:
-                return                                  # check result
-            result = self.machine.move()                # machine's shot
-            if result == result_code["defeat"]:
-                return                                  # check result
+    def move(self, gamer):
+        while True:
+            result =gamer.shot()                                # gamer's shot
+            if result == result_code["defeat"]:                 # check result
+                self.machine_board.hidden = False
+                draw_boards(self.machine_board, self.man_board)
+                return result
+            draw_boards(self.machine_board, self.man_board)
+            if result == result_code["miss"]: return result
 
-# -------------------------------------------------------------------
+
+    def start(self):                                            # start the game
+        say_game_start()                                        # game is started    
+        draw_boards(self.machine_board, self.man_board)         # draw boards
+        while True:
+            result = self.move(self.man)                        # man's move
+            if result == result_code["defeat"]:return           # check result
+            result = self.move(self.machine)                    # machine's move
+            if result == result_code["defeat"]:return           # check result           
+
+ # -------------------------------------------------------------------
 
 
 

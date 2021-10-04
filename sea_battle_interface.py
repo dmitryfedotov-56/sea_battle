@@ -27,43 +27,48 @@ def game_is_over():
     else:
         say_good_by()
         return True
-
-
 # ---------------------------- draw board ---------------------------
+
 
 hit_sign = 'X'      # ship cell is hit
 ship_sign = '■'     # ship cell
-shadow_sign = '0'   # cell is in the ship contour
+shadow_sign = '.'   # cell is in the ship contour
 miss_sign = 'T'     # missed shot
 
 
-def draw_board(board):                              # draw board
-
-    def appearance(cell):                           # cell appearance
+def draw_boards(machine_board, man_board):
+    
+    def appearance(cell, hidden):                   # cell appearance
         if cell.occupied:                           # if the cell is occupied   
             if cell.hit:                            # if it is hit
                 return " " + hit_sign               # hit sign
             else:                                   # if it is not hit
-                if board.hidden:                    # if the board i hidden
+                if hidden:                          # if the board i hidden
                     return "  "                     # nothing
                 else:                               # if it is not 
                     return " " + ship_sign          # ship sign
         else:                                       # if the cell is not occupied
             if cell.hit: return " " + miss_sign     # and it is hit, miss sign
+            else: 
+                if cell.shaded: return " "+ shadow_sign
+          
         return "  "                                 # nothing in other cases
 
-    if board.code == gamer_code["machine"]:  print("Мои корабли")
-    if board.code == gamer_code["man"]:      print("Tвои корабли")
-
-    print("----------------")
-    print("  1 2 3 4 5 6")
+    print(" -------------------------------")
+    print("   Moи корабли |   Твои корабли |")
+    print("   1 2 3 4 5 6 |   1 2 3 4 5 6  |")
     for i in range(size):
-        s = str(i+1)
-        line = board.field[i]
-        for cell in line:
-            s += appearance(cell)
+        s = " "
+        s += str(i+1)
+        line = machine_board.field[i]
+        for cell in line: s += appearance(cell, machine_board.hidden)
+        s += " | "
+        s += str(i+1)
+        line = man_board.field[i]
+        for cell in line: s += appearance(cell, False) 
+        s += "  |"
         print(s)
-    print("----------------")
+    print(" -------------------------------")
 
 # ------------------------ get coordinates --------------------------
 
@@ -122,8 +127,6 @@ def show_result(code, result):
         if result == result_code["wounded"]:   print("Я попал!")
         if result == result_code["killed"]:    print("Я потопил твой корабль!")
         if result == result_code["defeat"]:    print("Ура! Я победил")
-
-    print("----------------")
 
 # -------------------------------------------------------------------
 
